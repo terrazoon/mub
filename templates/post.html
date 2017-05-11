@@ -6,7 +6,12 @@
     <div class="post-title">
       {{p.subject}}
     </div>
-
+    <div class="post-likes">
+      Likes:{{p.likes}}  
+	  <form class="post-like-button" method="post" action="/like/{{p.key().id()}}">
+        <button type="submit">Like</button>
+      </form>
+    </div>
     <div class="post-date">
       {{p.created.strftime("%b %d, %Y")}}
     </div>

@@ -55,6 +55,11 @@ input[type=submit] {
     text-decoration: none;
 }
 
+align-right {
+	position:relative;
+	right: 0px;
+}
+
 .post + .post {
     margin-top: 15px;
 }
@@ -69,9 +74,28 @@ input[type=submit] {
     font-weight: bold;
 }
 
+.post-author {
+    font-size: 16px;
+    font-weight: bold;
+	color: #999000;
+}
+
+.post-likes {
+    font-size: 12px;
+    font-weight: bold;
+}
+
 .post-date {
     position: absolute;
     right: 0px;
+    bottom: 0px;
+    color: #999;
+
+}
+
+.post-like-button {
+    position: absolute;
+    right: 120px;
     bottom: 0px;
     color: #999;
 

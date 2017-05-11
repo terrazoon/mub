@@ -189,8 +189,14 @@ class BlogPost(db.Model):
     
 class BlogHandler(Handler):
     def get(self):
+        hsh = self.request.cookies.get('username')
+        username = ""
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username=arr[0]
+            
         blogposts = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 10')
-        self.render('front.html', blogposts=blogposts)
+        self.render('front.html', blogposts=blogposts, username=username)
         
 class NewPostHandler(Handler):
     def get(self):
@@ -215,14 +221,36 @@ class NewPostHandler(Handler):
             
 class PermalinkHandler(Handler):
     def get(self, post_id):
-        post = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
+
+
+        params = dict(post_id = post_id)
         
-        if not post:
-            self.error(404)
-            return
+        posts = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC')
+        for post in posts:
+            #self.write("<BR>post_id=x" + str(post_id) + "x db id=x" + str(post.key().id()) + "x" )
+            #self.write((str(post_id)==str(post.key().id())))
+            if str(post_id) == str(post.key().id()):
+                self.render("permalink.html", post=post)
+        
+        
+        #if not post:
+        #    self.error(404)
+        #    return
 
-        self.render("permalink.html", post = post.get())
+        
+class LikeHandler(Handler):
+    def get(self):
+        self.redirect('/blog')
 
+    def post(self, post_id):
+        hsh = self.request.cookies.get('username')
+        
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            self.write('username=%s' % username)
+            self.write('post_id=%s' % post_id)
+        #self.redirect('/blog')
 		
 app = webapp2.WSGIApplication([
     ('/', MainPage),
@@ -233,6 +261,7 @@ app = webapp2.WSGIApplication([
     ('/blog/([0-9]+)', PermalinkHandler),
     ('/login', LoginHandler),
     ('/logout', LogoutHandler),
+    ('/like/([0-9]+)', LikeHandler),
     
 
 ], debug=True)
