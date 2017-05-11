@@ -207,8 +207,9 @@ class NewPostHandler(Handler):
                 newpost = BlogPost(author=username, subject=subject, content=content)
                 newpost.put()
 
-                p = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
-                self.redirect('/blog/%s' % str(p.get().key().id()))
+                #p = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
+                #self.redirect('/blog/%s' % str(p.get().key().id()))
+                self.redirect('/blog/%s' % str(newpost.key().id()))
             else:
                 self.redirect('/blog/newpost')
             
