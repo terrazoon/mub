@@ -23,6 +23,9 @@ class Handler(webapp2.RequestHandler):
 
 def valid_cookie(raw_cookie):
     arr = raw_cookie.split("|")
+    if len(arr) != 2:
+        return False
+    
     cookie_value = arr[0]
     provided_hash = arr[1]
     test_hash = hashlib.sha256(cookie_value).hexdigest()
@@ -218,6 +221,8 @@ class NewPostHandler(Handler):
                 self.redirect('/blog/%s' % str(newpost.key().id()))
             else:
                 self.redirect('/blog/newpost')
+        else:
+            self.redirect('/signup')
             
 class PermalinkHandler(Handler):
     def get(self, post_id):
@@ -248,9 +253,11 @@ class LikeHandler(Handler):
         if valid_cookie(hsh): 
             arr = hsh.split("|")
             username = arr[0]
-            self.write('username=%s' % username)
-            self.write('post_id=%s' % post_id)
-        #self.redirect('/blog')
+            #TODO query new table Likes to maker sure user has never liked this post before
+            #TODO query to add 1 to likes for this post
+            self.redirect('/blog')
+        else:
+            self.redirect('/signup')
 		
 app = webapp2.WSGIApplication([
     ('/', MainPage),
