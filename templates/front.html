@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<form method="get" action="/signup">
+    <button type="submit">Sign Up</button>
+</form>
+<form method="get" action="/login">
+    <button type="submit">Login</button>
+</form>
+
+
+  {% for p in blogposts %}
+    {{ p.render() | safe }}
+    <br><br>
+  {% endfor %}
+
+{% endblock %}
