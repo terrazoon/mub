@@ -21,14 +21,24 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
 	self.write(self.render_str(template, **kw))
 
-
+def valid_cookie(raw_cookie):
+    arr = raw_cookie.split("|")
+    cookie_value = arr[0]
+    provided_hash = arr[1]
+    test_hash = hashlib.sha256(cookie_value).hexdigest()
+    return test_hash == provided_hash
+        
 class WelcomeHandler(Handler):
     def get(self):
         self.post()
         
     def post(self):
-        username = self.request.cookies.get('username')
-        self.render("welcome.html", username=username)
+        hsh = self.request.cookies.get('username')
+        if valid_cookie(hsh):
+            arr = hsh.split("|")
+            self.render("welcome.html", username=arr[0])
+        else:
+            self.redirect("/logout")
 
 def valid_username(username):
     USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -41,6 +51,11 @@ def valid_password(password):
 def valid_email(email):
     EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
     return not email or EMAIL_RE.match(email)
+
+def get_hashed_cookie(cookie_key, cookie_value):
+    hsh = str(hashlib.sha256(cookie_value).hexdigest())
+    hashed_cookie = "%s = %s|%s" % (cookie_key, cookie_value, hsh)
+    return str(hashed_cookie)
 
 class User(db.Model):
     username = db.StringProperty(required = True)
@@ -90,7 +105,7 @@ class SignupHandler(Handler):
             
             new_user = User(username = username, pwd_hash = pwd_hash, email = email)
             new_user.put()
-            self.response.headers.add_header('Set-Cookie', 'username=%s' % str(username))
+            self.response.headers.add_header('Set-Cookie', get_hashed_cookie('username', username))
             self.redirect("/welcome")
 
 
@@ -131,7 +146,7 @@ class LoginHandler(Handler):
         if have_error:
             self.render('login.html', **params);
         else:
-            self.response.headers.add_header('Set-Cookie', 'username=%s' % str(username))
+            self.response.headers.add_header('Set-Cookie', get_hashed_cookie('username', username))
             self.redirect("/welcome")
 
 
@@ -149,10 +164,6 @@ class LogoutHandler(Handler):
 class MainPage(Handler):
 	def get(self):       
             self.redirect("/signup")
-		
-
-
-##### blog
 
 
 def blog_key(name = 'default'):
@@ -164,6 +175,9 @@ def render_str(template, **params):
     return t.render(params)
 
 class BlogPost(db.Model):
+    #TODO make author required after clean up db
+    author = db.StringProperty()
+    likes = db.IntegerProperty()
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
@@ -183,25 +197,27 @@ class NewPostHandler(Handler):
         self.render('newpost.html')
 
     def post(self):
-        subject = self.request.get('subject')
-        content = self.request.get('content')
-        if subject and content:
-            newpost = BlogPost(subject=subject, content=content)
-            newpost.put()
+        hsh = self.request.cookies.get('username')
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            subject = self.request.get('subject')
+            content = self.request.get('content')
+            if subject and content:
+                newpost = BlogPost(author=username, subject=subject, content=content)
+                newpost.put()
 
-            p = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
-            self.redirect('/blog/%s' % str(p.get().key().id()))
-        else:
-            self.redirect('/blog/newpost')
+                p = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
+                self.redirect('/blog/%s' % str(p.get().key().id()))
+            else:
+                self.redirect('/blog/newpost')
             
 class PermalinkHandler(Handler):
     def get(self, post_id):
-        #key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
         
         if not post:
-            self.write('no')
-            #self.error(404)
+            self.error(404)
             return
 
         self.render("permalink.html", post = post.get())
