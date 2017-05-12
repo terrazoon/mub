@@ -177,18 +177,22 @@ def render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
 
+class Like(db.Model):
+    user = db.StringProperty(required = True)
+    post_id = db.IntegerProperty(required = True)
+    
 class BlogPost(db.Model):
     #TODO make author required after clean up db
-    author = db.StringProperty()
+    author = db.StringProperty(required = True)
     likes = db.IntegerProperty()
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
-    def render(self):
+    def render(self, username):
         self._render_text = self.content.replace("\n", "<BR>")
-        return render_str("post.html", p=self)
+        return render_str("post.html", p=self, username=username)
     
 class BlogHandler(Handler):
     def get(self):
@@ -215,9 +219,6 @@ class NewPostHandler(Handler):
             if subject and content:
                 newpost = BlogPost(author=username, subject=subject, content=content)
                 newpost.put()
-
-                #p = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 1')
-                #self.redirect('/blog/%s' % str(p.get().key().id()))
                 self.redirect('/blog/%s' % str(newpost.key().id()))
             else:
                 self.redirect('/blog/newpost')
@@ -232,8 +233,6 @@ class PermalinkHandler(Handler):
         
         posts = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC')
         for post in posts:
-            #self.write("<BR>post_id=x" + str(post_id) + "x db id=x" + str(post.key().id()) + "x" )
-            #self.write((str(post_id)==str(post.key().id())))
             if str(post_id) == str(post.key().id()):
                 self.render("permalink.html", post=post)
         
@@ -248,18 +247,37 @@ class LikeHandler(Handler):
         self.redirect('/blog')
 
     def incr_likes(self, post_id, username):
+        #find the post in question
         p = db.GqlQuery(
             "SELECT * FROM BlogPost where __key__ = KEY('BlogPost', "
             + post_id + ")")
         post = p.get()
-        
-        if post and post.author != username:
-            if post.likes == None:
-                post.likes = 1
-            else:
-                post.likes += 1    
-            post.put()
 
+        #find out if the user has already liked it
+        q = db.GqlQuery(
+            "SELECT * FROM Like where user='" + username + "'"
+            + " and post_id=" + post_id)
+        like = q.get()
+
+        #if the user already liked it, unlike it
+        if post and post.author != username:
+            if like:
+                like.delete()
+                if post.likes == None:
+                    post.likes = 0
+                else:
+                    post.likes -= 1
+                post.put()
+            else:
+                like = Like(user = username, post_id = long(post_id))
+                like.put()
+                if post.likes == None:
+                    post.likes = 0
+                else:
+                    post.likes += 1
+                post.put()
+        
+            
         
     def post(self, post_id):
         hsh = self.request.cookies.get('username')

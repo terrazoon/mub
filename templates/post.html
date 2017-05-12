@@ -11,24 +11,37 @@
       {{p.subject}}
     </div>
     <div class="post-likes">
-      Likes:{{p.likes}}  
-	  <form class="post-like-button" method="post" action="/like/{{p.key().id()}}">
-        <button type="submit">Like</button>
-      </form>
-	</div>
-	<div class="post-deletes">
-	  <form class="post-delete-button" method="post" action="/delete/{{p.key().id()}}">
-        <button type="submit">Delete</button>
-      </form>
-	</div>
-	<div class="post-edits">
-	  <form class="post-edit-button" method="post" action="/edit/{{p.key().id()}}">
-        <button type="submit">Edit</button>
-      </form>
-	</div>
-    <div class="post-date">
-      {{p.created.strftime("%b %d, %Y")}}
-    </div>
+	  <table class="actions-table">
+	    <tr>
+		   
+           <td>		   
+	         <form class="post-like-button" method="post" action="/like/{{p.key().id()}}">
+               <button type="submit">Like</button>
+             </form>
+		   </td>
+		   <td>
+		     <form class="post-delete-button" method="post" action="/delete/{{p.key().id()}}">
+               <button type="submit">Delete</button>
+             </form>
+	
+		   </td>
+		   <td>
+		     <form class="post-edit-button" method="post" action="/edit/{{p.key().id()}}">
+               <button type="submit">Edit</button>
+             </form>
+		   </td>
+		   <td>
+		     {{p.created.strftime("%b %d, %Y")}}
+		   </td>
+		   <td>
+		     Likes:{{p.likes}} 
+           </td>
+		   
+		</tr>
+	  </table>
+      
+	
+	 </div>
   </div>
 
   <div class="post-content">

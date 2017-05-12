@@ -3,17 +3,18 @@
 {% block content %}
 
 {% if username=="" %}
-<div class="align-right">
+<div class="signup">
   <form method="get" action="/signup">
     <button type="submit">Sign Up</button>
   </form>
+
   <form method="get" action="/login">
     <button type="submit">Login</button>
   </form>
 </div>
 {% else %}
 
-<div class="align-right">
+<div class="logout">
   <form method="get" action="/logout">
     <button type="submit">Logout</button>
   </form>
@@ -23,7 +24,7 @@
 
 
   {% for p in blogposts %}
-    {{ p.render() | safe }}
+    {{ p.render(username) | safe }}
 	
     <br><br>
   {% endfor %}
