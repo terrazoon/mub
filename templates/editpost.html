@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>edit post</h2>
+
+    <form method="post" action="/save/{{p.key().id()}}">">
+      <label>
+        <div>subject</div>
+        <input type="text" name="subject" value="{{p.subject}}">
+      </label>
+
+      <label>
+        <div>blog</div>
+        <textarea name="content">{{p.content}}</textarea>
+      </label>
+      <input type="hidden" name = "id" value="{{p.key().id}}">
+      <div class="error">{{error}}</div>
+
+      <input type="submit">
+    </form>
+{% endblock %}

@@ -298,6 +298,60 @@ class DeleteHandler(Handler):
             self.redirect('/blog')
         else:
             self.redirect('/signup')
+
+
+class EditHandler(Handler):
+    def get(self):
+        self.render('editpost.html')
+
+    def edit_post(self, post_id, username):
+        p = db.GqlQuery(
+            "SELECT * FROM BlogPost where __key__ = KEY('BlogPost', "
+            + post_id + ")")
+        post = p.get()
+        if post and post.author == username:
+            self.render('editpost.html', p = post)
+
+        
+    def post(self, post_id):
+        hsh = self.request.cookies.get('username')
+        
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            self.edit_post(post_id, username)
+        else:
+            self.redirect('/signup')
+
+class SaveHandler(Handler):
+    def get(self):
+        self.render('editpost.html')
+
+    def save_post(self, post_id, subject, content, username):
+        p = db.GqlQuery(
+            "SELECT * FROM BlogPost where __key__ = KEY('BlogPost', "
+            + post_id + ")")
+        post = p.get()
+        if post and post.author == username:
+            post.subject = subject
+            post.content = content
+            post.put()
+
+        
+    def post(self, post_id):
+        hsh = self.request.cookies.get('username')
+        subject = self.request.get("subject")
+        content = self.request.get("content")
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            self.save_post(post_id, subject, content, username)
+            self.redirect("/blog")
+        else:
+            self.redirect('/signup')
+
+            
+            
             
 app = webapp2.WSGIApplication([
     ('/', MainPage),
@@ -310,6 +364,9 @@ app = webapp2.WSGIApplication([
     ('/logout', LogoutHandler),
     ('/like/([0-9]+)', LikeHandler),
     ('/delete/([0-9]+)', DeleteHandler),
+    ('/edit/([0-9]+)', EditHandler),
+    ('/save/([0-9]+)', SaveHandler),
+    
     
 
 ], debug=True)
