@@ -247,18 +247,58 @@ class LikeHandler(Handler):
     def get(self):
         self.redirect('/blog')
 
+    def incr_likes(self, post_id, username):
+        p = db.GqlQuery(
+            "SELECT * FROM BlogPost where __key__ = KEY('BlogPost', "
+            + post_id + ")")
+        post = p.get()
+        
+        if post and post.author != username:
+            if post.likes == None:
+                post.likes = 1
+            else:
+                post.likes += 1    
+            post.put()
+
+        
     def post(self, post_id):
         hsh = self.request.cookies.get('username')
         
         if valid_cookie(hsh): 
             arr = hsh.split("|")
             username = arr[0]
-            #TODO query new table Likes to maker sure user has never liked this post before
-            #TODO query to add 1 to likes for this post
+            self.incr_likes(post_id, username)
             self.redirect('/blog')
         else:
             self.redirect('/signup')
-		
+
+        
+class DeleteHandler(Handler):
+    def get(self):
+        self.redirect('/blog')
+
+    def delete_post(self, post_id, username):
+        p = db.GqlQuery(
+            "SELECT * FROM BlogPost where __key__ = KEY('BlogPost', "
+            + post_id + ")")
+        post = p.get()
+        
+        if post and post.author == username:
+                
+            post.delete()
+
+        
+    def post(self, post_id):
+        hsh = self.request.cookies.get('username')
+        
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            self.delete_post(post_id, username)
+            self.redirect('/blog')
+        else:
+            self.redirect('/signup')
+            
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/signup', SignupHandler),
@@ -269,6 +309,7 @@ app = webapp2.WSGIApplication([
     ('/login', LoginHandler),
     ('/logout', LogoutHandler),
     ('/like/([0-9]+)', LikeHandler),
+    ('/delete/([0-9]+)', DeleteHandler),
     
 
 ], debug=True)

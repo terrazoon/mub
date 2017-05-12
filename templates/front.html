@@ -2,6 +2,7 @@
 
 {% block content %}
 
+{% if username=="" %}
 <div class="align-right">
   <form method="get" action="/signup">
     <button type="submit">Sign Up</button>
@@ -10,6 +11,7 @@
     <button type="submit">Login</button>
   </form>
 </div>
+{% endif %}
 
 
   {% for p in blogposts %}

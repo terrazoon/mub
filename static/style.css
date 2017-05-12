@@ -98,7 +98,14 @@ align-right {
     right: 120px;
     bottom: 0px;
     color: #999;
+}
 
+
+.post-delete-button {
+    position: absolute;
+    right: 240px;
+    bottom: 0px;
+    color: #999;
 }
 
 .post-content {
