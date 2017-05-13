@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="main-title">Super Blog</div>
+<div class="welcome">Hi, {{username}}</div>
+  <form method="get" action="/blog/newpost">
+    <button type="submit">New Post</button>
+  </form>
+
+<BR><BR>
 
 {% if username=="" %}
 <div class="signup">

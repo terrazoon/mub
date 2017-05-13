@@ -108,20 +108,6 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
 	self.write(self.render_str(template, **kw))
 
-        
-class WelcomeHandler(Handler):
-    def get(self):
-        self.post()
-        
-    def post(self):
-        hsh = self.request.cookies.get('username')
-        if valid_cookie(hsh):
-            arr = hsh.split("|")
-            self.render("welcome.html", username=arr[0])
-        else:
-            self.redirect("/logout")
-
-
     
 class SignupHandler(Handler):
 
@@ -168,7 +154,7 @@ class SignupHandler(Handler):
             new_user.put()
             self.response.headers.add_header('Set-Cookie',
                 get_hashed_cookie('username', username))
-            self.redirect("/welcome")
+            self.redirect("/blog")
 
 
 class LoginHandler(Handler):
@@ -211,7 +197,7 @@ class LoginHandler(Handler):
             self.render('login.html', **params);
         else:
             self.response.headers.add_header('Set-Cookie', get_hashed_cookie('username', username))
-            self.redirect("/welcome")
+            self.redirect("/blog")
 
 
 class LogoutHandler(Handler):
@@ -448,12 +434,39 @@ class NewCommentHandler(Handler):
         else:
             self.redirect('/signup')
             
+
+class DeleteCommentHandler(Handler):
+    def get(self, comment_id):
+        hsh = self.request.cookies.get('username')
+        
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
             
+            p = db.GqlQuery(
+            "SELECT * FROM Comment where __key__ = KEY('Comment', "
+                + comment_id + ")")
+            comment = p.get()
+
+            params = dict(username=username)    
+            if comment and comment.user == username:            
+                comment.delete()
+                params['error_msg'] = "You deleted your comment"
+                self.render('editpost.html', **params )
+            
+            else:
+                params['error_msg'] =
+                    "You can't delete other people's comments"
+                self.render('editpost.html', **params )
+    
+            
+        else:
+            self.redirect('/signup')
+                    
             
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/signup', SignupHandler),
-    ('/welcome', WelcomeHandler),
     ('/blog/newpost', NewPostHandler),
     ('/blog', BlogHandler),
     ('/blog/([0-9]+)', PermalinkHandler),
@@ -464,6 +477,7 @@ app = webapp2.WSGIApplication([
     ('/edit/([0-9]+)', EditHandler),
     ('/save/([0-9]+)', SaveHandler),
     ('/blog/new_comment/([0-9]+)', NewCommentHandler),
+    ('/blog/delete_comment/([0-9]+)', DeleteCommentHandler),
     
     
     
