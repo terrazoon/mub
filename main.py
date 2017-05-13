@@ -6,6 +6,10 @@ import re
 import hashlib
 import time
 
+#TODO
+# Fix permalink bug
+# add/edit/delete comments
+
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -65,7 +69,11 @@ class BlogPost(db.Model):
 
     def render(self, username):
         self._render_text = self.content.replace("\n", "<BR>")
-        return render_str("post.html", p=self, username=username)
+        
+        comments = db.GqlQuery("SELECT * from Comment where post_id=%d"
+            % self.key().id())
+        
+        return render_str("post.html", p=self, comments=comments, username=username)
 
 class Comment(db.Model):
     #TODO make author required after clean up db

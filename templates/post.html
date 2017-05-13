@@ -36,11 +36,11 @@
              </form>
 		   </td>
 		   <td>
-		     {{p.created.strftime("%b %d, %Y")}}
-		   </td>
-		   <td>
 		     Likes:{{p.likes}} 
            </td>
+		   <td>
+		     {{p.created.strftime("%b %d, %Y")}}
+		   </td>
 		   
 		</tr>
 	  </table>
@@ -51,6 +51,16 @@
 
   <div class="post-content">
     {{p._render_text | safe}}
+  </div>
+  <hr class="hr-style17">
+  <div class="post-comments">
+    <h4>Comments:</h4>
+	<BR><BR>
+    {% for c in comments %}
+	<b>{{ c.user }}</b>:
+	{{ c.content }}
+	<BR><BR>
+	{% endfor %}
   </div>
 </div>
 

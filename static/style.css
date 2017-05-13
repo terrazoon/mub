@@ -85,6 +85,13 @@ align-right {
     font-weight: bold;
 }
 
+
+.post-comments {
+    font-size: 12px;
+	color: #099900;
+	margin-left: 20px;
+}
+
 .post-date {
     position: absolute;
     right: 0px;
@@ -120,3 +127,7 @@ align-right {
     margin-top: 5px;
 }
 
+hr {
+	background-color: #fff;
+	border-top: 2px dotted #8c8b8b;
+}
