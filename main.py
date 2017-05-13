@@ -8,19 +8,10 @@ import hashlib
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
+jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
+    autoescape = True)
 
-class Handler(webapp2.RequestHandler):
-    def write(self, *a, **kw):
-        self.response.out.write(*a, **kw)
-		
-    def render_str(self, template, **params):
-        t = jinja_env.get_template(template)
-	return t.render(params)
-	
-    def render(self, template, **kw):
-	self.write(self.render_str(template, **kw))
-
+#Global methods
 def valid_cookie(raw_cookie):
     arr = raw_cookie.split("|")
     if len(arr) != 2:
@@ -30,18 +21,6 @@ def valid_cookie(raw_cookie):
     provided_hash = arr[1]
     test_hash = hashlib.sha256(cookie_value).hexdigest()
     return test_hash == provided_hash
-        
-class WelcomeHandler(Handler):
-    def get(self):
-        self.post()
-        
-    def post(self):
-        hsh = self.request.cookies.get('username')
-        if valid_cookie(hsh):
-            arr = hsh.split("|")
-            self.render("welcome.html", username=arr[0])
-        else:
-            self.redirect("/logout")
 
 def valid_username(username):
     USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -60,11 +39,66 @@ def get_hashed_cookie(cookie_key, cookie_value):
     hashed_cookie = "%s = %s|%s" % (cookie_key, cookie_value, hsh)
     return str(hashed_cookie)
 
+def blog_key(name = 'default'):
+    return db.Key.from_path('blog', name)
+
+
+def render_str(template, **params):
+    t = jinja_env.get_template(template)
+    return t.render(params)
+
+#Db classes
+
+class Like(db.Model):
+    user = db.StringProperty(required = True)
+    post_id = db.IntegerProperty(required = True)
+    
+class BlogPost(db.Model):
+    #TODO make author required after clean up db
+    author = db.StringProperty(required = True)
+    likes = db.IntegerProperty()
+    subject = db.StringProperty(required = True)
+    content = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+
+    def render(self, username):
+        self._render_text = self.content.replace("\n", "<BR>")
+        return render_str("post.html", p=self, username=username)
+
 class User(db.Model):
     username = db.StringProperty(required = True)
     pwd_hash = db.StringProperty(required = True)
     email = db.StringProperty()
     created = db.DateTimeProperty(auto_now_add = True)
+
+#Handlers
+
+class Handler(webapp2.RequestHandler):
+    def write(self, *a, **kw):
+        self.response.out.write(*a, **kw)
+		
+    def render_str(self, template, **params):
+        t = jinja_env.get_template(template)
+	return t.render(params)
+	
+    def render(self, template, **kw):
+	self.write(self.render_str(template, **kw))
+
+        
+class WelcomeHandler(Handler):
+    def get(self):
+        self.post()
+        
+    def post(self):
+        hsh = self.request.cookies.get('username')
+        if valid_cookie(hsh):
+            arr = hsh.split("|")
+            self.render("welcome.html", username=arr[0])
+        else:
+            self.redirect("/logout")
+
+
     
 class SignupHandler(Handler):
 
@@ -169,30 +203,7 @@ class MainPage(Handler):
             self.redirect("/signup")
 
 
-def blog_key(name = 'default'):
-    return db.Key.from_path('blog', name)
 
-
-def render_str(template, **params):
-    t = jinja_env.get_template(template)
-    return t.render(params)
-
-class Like(db.Model):
-    user = db.StringProperty(required = True)
-    post_id = db.IntegerProperty(required = True)
-    
-class BlogPost(db.Model):
-    #TODO make author required after clean up db
-    author = db.StringProperty(required = True)
-    likes = db.IntegerProperty()
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self, username):
-        self._render_text = self.content.replace("\n", "<BR>")
-        return render_str("post.html", p=self, username=username)
     
 class BlogHandler(Handler):
     def get(self):
