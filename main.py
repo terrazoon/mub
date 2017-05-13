@@ -6,20 +6,16 @@ import re
 import hashlib
 import time
 
-#TODO
-# Fix permalink bug
-# edit/delete comments
-# welcome page should really be main blog page
-# add new post button
-
-
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
     autoescape = True)
 
-#Global methods
+### Global methods ###
+
+# checks if cookie is valid
+# TODO, add salt
 def valid_cookie(raw_cookie):
     arr = raw_cookie.split("|")
     if len(arr) != 2:
@@ -57,12 +53,13 @@ def render_str(template, **params):
 
 #Db classes
 
+# This class manages all the likes for the blog
 class Like(db.Model):
     user = db.StringProperty(required = True)
     post_id = db.IntegerProperty(required = True)
-    
+
+# This class manages one individual post
 class BlogPost(db.Model):
-    #TODO make author required after clean up db
     author = db.StringProperty(required = True)
     likes = db.IntegerProperty()
     subject = db.StringProperty(required = True)
@@ -76,8 +73,10 @@ class BlogPost(db.Model):
         comments = db.GqlQuery("SELECT * from Comment where post_id=%d"
             % self.key().id())
         
-        return render_str("post.html", p=self, comments=comments, username=username)
+        return render_str("post.html", p=self, comments=comments,
+            username=username)
 
+# This class manages one individual comment
 class Comment(db.Model):
     user = db.StringProperty(required = True)
     post_id = db.IntegerProperty()
@@ -89,14 +88,16 @@ class Comment(db.Model):
         self._render_text = self.content.replace("\n", "<BR>")
         return render_str("comment.html", p=self, username=username)
 
+# This class manages a user
 class User(db.Model):
     username = db.StringProperty(required = True)
     pwd_hash = db.StringProperty(required = True)
     email = db.StringProperty()
     created = db.DateTimeProperty(auto_now_add = True)
 
-#Handlers
+### Handlers ###
 
+# Base class for handlers
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
@@ -108,7 +109,7 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
 	self.write(self.render_str(template, **kw))
 
-    
+# Handles new user signup    
 class SignupHandler(Handler):
 
     def get(self):
@@ -156,7 +157,7 @@ class SignupHandler(Handler):
                 get_hashed_cookie('username', username))
             self.redirect("/blog")
 
-
+# Handles login for existing users
 class LoginHandler(Handler):
 
     def get(self):
@@ -196,10 +197,11 @@ class LoginHandler(Handler):
         if have_error:
             self.render('login.html', **params);
         else:
-            self.response.headers.add_header('Set-Cookie', get_hashed_cookie('username', username))
+            self.response.headers.add_header('Set-Cookie',
+                get_hashed_cookie('username', username))
             self.redirect("/blog")
 
-
+# This class handles logout
 class LogoutHandler(Handler):
 
     def get(self):
@@ -210,14 +212,14 @@ class LogoutHandler(Handler):
         self.response.headers.add_header('Set-Cookie', 'username=; Path=/')
         
         self.redirect('/signup')        
-	
+
+# This class is the main page when the user is not logged in
 class MainPage(Handler):
 	def get(self):       
             self.redirect("/signup")
 
 
-
-    
+# This class handles the display of "all" the posts in the blog
 class BlogHandler(Handler):
          
     def get(self):
@@ -229,7 +231,8 @@ class BlogHandler(Handler):
             
         blogposts = db.GqlQuery('SELECT * from BlogPost ORDER BY created DESC LIMIT 10')
         self.render('front.html', blogposts=blogposts, username=username)
-        
+
+# Handles a new post
 class NewPostHandler(Handler):
     def get(self):
         self.render('newpost.html')
@@ -251,10 +254,9 @@ class NewPostHandler(Handler):
         else:
             self.redirect('/signup')
 
-#TODO fix bug here, blank display            
+# Handles a permalink after new post is saved
 class PermalinkHandler(Handler):
     def get(self, post_id):
-
 
         params = dict(post_id = post_id)
         
@@ -265,9 +267,9 @@ class PermalinkHandler(Handler):
                 break
         
         
-        #if not post:
-        #    self.error(404)
-        #    return
+        if not post:
+            self.error(404)
+            return
 
         
 class LikeHandler(Handler):
@@ -476,8 +478,6 @@ class EditCommentHandler(Handler):
             + comment_id + ")")
         comment = q.get()
         if comment and comment.user == username:
-            #self.write(comment.user)
-            #self.write(comment.content)
             self.render('edit_comment.html', p = comment)
         else:
             params = dict(username=username)

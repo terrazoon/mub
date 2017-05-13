@@ -10,6 +10,11 @@
     <div class="post-title">
       {{p.subject}}
     </div>
+	<div class="post-date">
+      	{{p.created.strftime("%b %d, %Y")}}
+	
+    </div>
+	
     <div class="post-likes">
 	  <table class="actions-table">
 	    <tr>
@@ -39,9 +44,6 @@
 		   <td>
 		     Likes:{{p.likes}} 
            </td>
-		   <td>
-		     {{p.created.strftime("%b %d, %Y")}}
-		   </td>
 		   
 		</tr>
 	  </table>
