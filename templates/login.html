@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+      <form method="get" action="/signup">
+        <button class='signup' type="submit">Sign Up</button>
+      </form>
+	
     <h2>Login</h2>
     <form method="post">
-      <table>
+      <table  >
         <tr>
           <td class="label">
             Username
@@ -21,7 +26,7 @@
             Password
           </td>
           <td>
-            <input type="password" name="password" value="">
+            <input type="password"  name="password" value="">
           </td>
           <td class="error">
             {{error_password}}
@@ -33,8 +38,6 @@
       <input type="submit">
     </form>
 	
-	<form method="get" action="/signup">
-      <button type="submit">Sign Up</button>
-    </form>
+	
 	
 {% endblock %}

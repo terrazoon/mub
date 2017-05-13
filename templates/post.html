@@ -31,6 +31,11 @@
              </form>
 		   </td>
 		   <td>
+		     <form class="post-comment-button" method="get" action="/blog/new_comment/{{p.key().id()}}">
+               <button type="submit">Comment</button>
+             </form>
+		   </td>
+		   <td>
 		     {{p.created.strftime("%b %d, %Y")}}
 		   </td>
 		   <td>

@@ -66,6 +66,18 @@ class BlogPost(db.Model):
         self._render_text = self.content.replace("\n", "<BR>")
         return render_str("post.html", p=self, username=username)
 
+class Comment(db.Model):
+    #TODO make author required after clean up db
+    user = db.StringProperty(required = True)
+    post_id = db.IntegerProperty()
+    content = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+
+    def render(self, username):
+        self._render_text = self.content.replace("\n", "<BR>")
+        return render_str("comment.html", p=self, username=username)
+
 class User(db.Model):
     username = db.StringProperty(required = True)
     pwd_hash = db.StringProperty(required = True)
@@ -379,6 +391,27 @@ class SaveHandler(Handler):
         else:
             self.redirect('/signup')
 
+        
+class NewCommentHandler(Handler):
+    def get(self, post_id):
+        self.render('new_comment.html')
+
+    def post(self, post_id):
+        hsh = self.request.cookies.get('username')
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            content = self.request.get('content')
+            if content:
+                comment = Comment(user=username, content=content,
+                    post_id = long(post_id))
+                comment.put()
+                self.redirect('/blog')
+            else:
+                self.redirect('/blog')
+        
+        else:
+            self.redirect('/signup')
             
             
             
@@ -395,6 +428,8 @@ app = webapp2.WSGIApplication([
     ('/delete/([0-9]+)', DeleteHandler),
     ('/edit/([0-9]+)', EditHandler),
     ('/save/([0-9]+)', SaveHandler),
+    ('/blog/new_comment/([0-9]+)', NewCommentHandler),
+    
     
     
 

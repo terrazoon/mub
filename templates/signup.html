@@ -1,19 +1,10 @@
+{% extends "base.html" %}
 
-<!DOCTYPE html>
+{% block content %}
 
-<html>
-  <head>
-    <title>Sign Up</title>
-    <style type="text/css">
-      .label {text-align: right}
-      .error {color: red}
-    </style>
-
-  </head>
-
-  <body>
-    <h2>Signup</h2>
-    <form method="post">
+	
+	   <h2>Signup</h2>
+      <form method="post">
       <table>
         <tr>
           <td class="label">
@@ -67,9 +58,9 @@
       <input type="submit">
     </form>
 	
-	<form method="get" action="/login">
-      <button type="submit">Login</button>
-    </form>
-  </body>
+	      <form method="get" action="/login">
+        <button class="logout" type="submit">Login</button>
+      </form>
 
-</html>
+	
+{% endblock %}
