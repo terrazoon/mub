@@ -1,8 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+  {% if error_msg %}
+    <div class="error">
+	<h1>{{error_msg}}</h1>
+	<form method="get" action="/blog">
+	  <button>Cancel</button>
+	</div>
+  {% else %}
   <h2>edit post</h2>
 
+    
     <form method="post" action="/save/{{p.key().id()}}">
       <label>
         <div>subject</div>
@@ -14,8 +23,8 @@
         <textarea name="content">{{p.content}}</textarea>
       </label>
       <input type="hidden" name = "id" value="{{p.key().id}}">
-      <div class="error">{{error}}</div>
-
+      
       <input type="submit">
     </form>
+  {% endif %}
 {% endblock %}

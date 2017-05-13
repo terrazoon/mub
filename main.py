@@ -4,6 +4,7 @@ import webapp2
 import string
 import re
 import hashlib
+import time
 
 from google.appengine.ext import db
 
@@ -218,6 +219,7 @@ class MainPage(Handler):
 
     
 class BlogHandler(Handler):
+         
     def get(self):
         hsh = self.request.cookies.get('username')
         username = ""
@@ -240,7 +242,8 @@ class NewPostHandler(Handler):
             subject = self.request.get('subject')
             content = self.request.get('content')
             if subject and content:
-                newpost = BlogPost(author=username, subject=subject, content=content)
+                newpost = BlogPost(author=username, subject=subject,
+                    content=content, likes=0)
                 newpost.put()
                 self.redirect('/blog/%s' % str(newpost.key().id()))
             else:
@@ -258,6 +261,7 @@ class PermalinkHandler(Handler):
         for post in posts:
             if str(post_id) == str(post.key().id()):
                 self.render("permalink.html", post=post)
+                break
         
         
         #if not post:
@@ -286,9 +290,7 @@ class LikeHandler(Handler):
         if post and post.author != username:
             if like:
                 like.delete()
-                if post.likes == None:
-                    post.likes = 0
-                else:
+                if post.likes > 0:
                     post.likes -= 1
                 post.put()
             else:
@@ -299,6 +301,12 @@ class LikeHandler(Handler):
                 else:
                     post.likes += 1
                 post.put()
+            return True
+        else:
+            params = dict(username=username)
+            params['error_msg'] = "You can't like your own post"
+            self.render('editpost.html', **params )
+            return False
         
             
         
@@ -308,8 +316,8 @@ class LikeHandler(Handler):
         if valid_cookie(hsh): 
             arr = hsh.split("|")
             username = arr[0]
-            self.incr_likes(post_id, username)
-            self.redirect('/blog')
+            if self.incr_likes(post_id, username):
+                self.redirect('/blog')
         else:
             self.redirect('/signup')
 
@@ -324,9 +332,15 @@ class DeleteHandler(Handler):
             + post_id + ")")
         post = p.get()
         
-        if post and post.author == username:
-                
+        if post and post.author == username:            
             post.delete()
+            
+            return True
+        else:
+            params = dict(username=username)
+            params['error_msg'] = "You can't delete other people's posts"
+            self.render('editpost.html', **params )
+            return False
 
         
     def post(self, post_id):
@@ -335,8 +349,10 @@ class DeleteHandler(Handler):
         if valid_cookie(hsh): 
             arr = hsh.split("|")
             username = arr[0]
-            self.delete_post(post_id, username)
-            self.redirect('/blog')
+            if self.delete_post(post_id, username):
+                
+                self.redirect('/blog')
+                return
         else:
             self.redirect('/signup')
 
@@ -352,6 +368,10 @@ class EditHandler(Handler):
         post = p.get()
         if post and post.author == username:
             self.render('editpost.html', p = post)
+        else:
+            params = dict(username=username)
+            params['error_msg'] = "You can't edit other people's posts"
+            self.render('editpost.html', **params )
 
         
     def post(self, post_id):
