@@ -434,35 +434,93 @@ class NewCommentHandler(Handler):
         else:
             self.redirect('/signup')
             
-
 class DeleteCommentHandler(Handler):
     def get(self, comment_id):
+        
+        hsh = self.request.cookies.get('username')
+
+        if not valid_cookie(hsh):
+            self.redirect('/signup')
+            
+        arr = hsh.split("|")
+        username = arr[0]
+            
+        p = db.GqlQuery(
+        "SELECT * FROM Comment where __key__ = KEY('Comment', "
+            + comment_id + ")")
+        comment = p.get()
+
+        params = dict(username=username)    
+        if comment and comment.user == username:            
+            comment.delete()
+            params['success_msg'] = "You deleted your comment"
+            self.render('editpost.html', **params )
+            
+        else:
+            params['error_msg'] = "You can't delete other people's comments"
+            self.render('editpost.html', **params )
+                           
+
+
+class EditCommentHandler(Handler):
+    def get(self, comment_id):
+        hsh = self.request.cookies.get('username')
+        if not valid_cookie(hsh):
+            self.redirect('/signup')
+         
+        arr = hsh.split("|")
+        username = arr[0]
+        
+        q = db.GqlQuery(
+            "SELECT * FROM Comment where __key__ = KEY('Comment', "
+            + comment_id + ")")
+        comment = q.get()
+        if comment and comment.user == username:
+            #self.write(comment.user)
+            #self.write(comment.content)
+            self.render('edit_comment.html', p = comment)
+        else:
+            params = dict(username=username)
+            params['error_msg'] = "You can't edit other people's comments"
+            self.render('edit_comment.html', **params )
+
+        
+    def post(self, comment_id):
         hsh = self.request.cookies.get('username')
         
         if valid_cookie(hsh): 
             arr = hsh.split("|")
             username = arr[0]
-            
-            p = db.GqlQuery(
-            "SELECT * FROM Comment where __key__ = KEY('Comment', "
-                + comment_id + ")")
-            comment = p.get()
-
-            params = dict(username=username)    
-            if comment and comment.user == username:            
-                comment.delete()
-                params['error_msg'] = "You deleted your comment"
-                self.render('editpost.html', **params )
-            
-            else:
-                params['error_msg'] =
-                    "You can't delete other people's comments"
-                self.render('editpost.html', **params )
-    
-            
+            self.edit_comment(comment_id, username)
         else:
             self.redirect('/signup')
-                    
+
+
+class SaveCommentHandler(Handler):
+    def get(self):
+        self.write("get")
+        #self.render('edit_comment.html')
+
+    def save_comment(self, comment_id, content, username):
+        p = db.GqlQuery(
+            "SELECT * FROM Comment where __key__ = KEY('Comment', "
+            + comment_id + ")")
+        comment = p.get()
+        if comment and comment.user == username:
+            comment.content = content
+            comment.put()
+
+        
+    def post(self, comment_id):
+        hsh = self.request.cookies.get('username')
+        content = self.request.get("content")
+        if valid_cookie(hsh): 
+            arr = hsh.split("|")
+            username = arr[0]
+            self.save_comment(comment_id, content, username)
+            self.redirect("/blog")
+        else:
+            self.redirect('/signup')
             
 app = webapp2.WSGIApplication([
     ('/', MainPage),
@@ -478,6 +536,8 @@ app = webapp2.WSGIApplication([
     ('/save/([0-9]+)', SaveHandler),
     ('/blog/new_comment/([0-9]+)', NewCommentHandler),
     ('/blog/delete_comment/([0-9]+)', DeleteCommentHandler),
+    ('/blog/edit_comment/([0-9]+)', EditCommentHandler),
+    ('/blog/save_comment/([0-9]+)', SaveCommentHandler),
     
     
     
