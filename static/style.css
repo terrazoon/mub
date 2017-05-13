@@ -14,6 +14,9 @@ h2 {
     margin-bottom: 20px;
 }
 
+a {
+	color: #099900;
+}
 .error {
     color: red;
 }
@@ -28,6 +31,13 @@ label + label {
 }
 
 input[type=text] {
+    width: 500px;
+    font-size: 20px;
+    padding: 2px;
+    font-family: monospace;
+}
+
+input[type=password] {
     width: 500px;
     font-size: 20px;
     padding: 2px;

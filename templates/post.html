@@ -18,6 +18,7 @@
 	         <form class="post-like-button" method="post" action="/like/{{p.key().id()}}">
                <button type="submit">Like</button>
              </form>
+			 
 		   </td>
 		   <td>
 		     <form class="post-delete-button" method="post" action="/delete/{{p.key().id()}}">
@@ -59,6 +60,19 @@
     {% for c in comments %}
 	<b>{{ c.user }}</b>:
 	{{ c.content }}
+	
+	{% if username == c.user %}
+	<table class="link-table">
+	  <tr>
+	    <td>
+	    <a href="/blog/edit_comment/{{p.key().id()}}">edit</a>
+		</td>
+		<td>
+	    <a href="/blog/delete_comment/{{p.key().id()}}">delete</a>
+		</td>
+	  </tr>
+	</table>
+	{% endif %}
 	<BR><BR>
 	{% endfor %}
   </div>

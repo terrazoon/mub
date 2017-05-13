@@ -8,7 +8,10 @@ import time
 
 #TODO
 # Fix permalink bug
-# add/edit/delete comments
+# edit/delete comments
+# welcome page should really be main blog page
+# add new post button
+
 
 from google.appengine.ext import db
 
@@ -76,7 +79,6 @@ class BlogPost(db.Model):
         return render_str("post.html", p=self, comments=comments, username=username)
 
 class Comment(db.Model):
-    #TODO make author required after clean up db
     user = db.StringProperty(required = True)
     post_id = db.IntegerProperty()
     content = db.TextProperty(required = True)
@@ -161,9 +163,11 @@ class SignupHandler(Handler):
         else:
             pwd_hash = hashlib.sha256(username).hexdigest()
             
-            new_user = User(username = username, pwd_hash = pwd_hash, email = email)
+            new_user = User(username = username, pwd_hash = pwd_hash,
+                email = email)
             new_user.put()
-            self.response.headers.add_header('Set-Cookie', get_hashed_cookie('username', username))
+            self.response.headers.add_header('Set-Cookie',
+                get_hashed_cookie('username', username))
             self.redirect("/welcome")
 
 
@@ -197,6 +201,8 @@ class LoginHandler(Handler):
         if user:
             pwd_match = hashlib.sha256(password).hexdigest()
             if pwd_match != user.pwd_hash:
+                self.write("pwd_match=%s" % pwd_match)
+                self.write("user.pwd_has=%s" % user.pwd_hash)
                 params['error_password'] = "That password is invalid"
                 have_error = True
 
@@ -258,7 +264,8 @@ class NewPostHandler(Handler):
                 self.redirect('/blog/newpost')
         else:
             self.redirect('/signup')
-            
+
+#TODO fix bug here, blank display            
 class PermalinkHandler(Handler):
     def get(self, post_id):
 
