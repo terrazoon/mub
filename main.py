@@ -8,6 +8,12 @@ import time
 from model import *
 from google.appengine.ext import db
 
+#TODO
+# move global methods to a utils.py file
+# move handles to new package
+# refactor post/user db model stuff using: https://cloud.google.com/appengine/articles/modeling#one-to-many.
+# write a better readme with this: https://www.udacity.com/course/writing-readmes--ud777
+
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
     autoescape = True)
@@ -191,25 +197,38 @@ class BlogHandler(Handler):
 # Handles a new post
 class NewPostHandler(Handler):
     def get(self):
-        self.render('newpost.html')
-
-    def post(self):
         hsh = self.request.cookies.get('username')
-        if valid_cookie(hsh): 
-            arr = hsh.split("|")
-            username = arr[0]
-            subject = self.request.get('subject')
-            content = self.request.get('content')
-            if subject and content:
-                newpost = BlogPost(author=username, subject=subject,
-                    content=content, likes=0)
-                newpost.put()
-                self.redirect('/blog/%s' % str(newpost.key().id()))
-            else:
-                self.redirect('/blog/newpost')
-        else:
+        if not valid_cookie(hsh):
             self.redirect('/signup')
-
+            
+        arr = hsh.split("|")
+        username = arr[0]
+        if username=='':
+            self.redirect('/signup')
+        self.render('newpost.html')
+        
+    def post(self):
+        self.write("post")
+        hsh = self.request.cookies.get('username')
+        if not valid_cookie(hsh):
+            self.redirect('/signup')
+            
+            
+        arr = hsh.split("|")
+        username = arr[0]
+        if  username == '':
+            self.redirect('/signup')
+            
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        if subject and content:
+            newpost = BlogPost(author=username, subject=subject,
+                content=content, likes=0)
+            newpost.put()
+            self.redirect('/blog/%s' % str(newpost.key().id()))
+        else:
+            self.redirect('/blog/newpost')
+        
 # Handles a permalink after new post is saved
 class PermalinkHandler(Handler):
     def get(self, post_id):
