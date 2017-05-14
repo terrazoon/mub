@@ -5,7 +5,7 @@ import string
 import re
 import hashlib
 import time
-
+from model import *
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -50,50 +50,6 @@ def blog_key(name = 'default'):
 def render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
-
-#Db classes
-
-# This class manages all the likes for the blog
-class Like(db.Model):
-    user = db.StringProperty(required = True)
-    post_id = db.IntegerProperty(required = True)
-
-# This class manages one individual post
-class BlogPost(db.Model):
-    author = db.StringProperty(required = True)
-    likes = db.IntegerProperty()
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self, username):
-        self._render_text = self.content.replace("\n", "<BR>")
-        
-        comments = db.GqlQuery("SELECT * from Comment where post_id=%d"
-            % self.key().id())
-        
-        return render_str("post.html", p=self, comments=comments,
-            username=username)
-
-# This class manages one individual comment
-class Comment(db.Model):
-    user = db.StringProperty(required = True)
-    post_id = db.IntegerProperty()
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self, username):
-        self._render_text = self.content.replace("\n", "<BR>")
-        return render_str("comment.html", p=self, username=username)
-
-# This class manages a user
-class User(db.Model):
-    username = db.StringProperty(required = True)
-    pwd_hash = db.StringProperty(required = True)
-    email = db.StringProperty()
-    created = db.DateTimeProperty(auto_now_add = True)
 
 ### Handlers ###
 
